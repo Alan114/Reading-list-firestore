@@ -1,13 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../firebase/config";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 
-function useCollection(c) {
+export const useCollection = (c, _q) => {
   const [documents, setDocuments] = useState(null);
+
+  // set up query
+  const q = useRef(_q).current;
 
   useEffect(() => {
     // c being any collection, in our case it's books
     let ref = collection(db, c);
+
+    if (q) {
+      ref = query(ref, where(...q));
+    }
 
     const unsub = onSnapshot(ref, (snapshot) => {
       let results = [];
@@ -18,9 +25,7 @@ function useCollection(c) {
     });
 
     return () => unsub();
-  }, [c]);
+  }, [c, q]);
 
   return { documents };
-}
-
-export default useCollection;
+};
